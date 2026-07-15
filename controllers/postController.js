@@ -57,7 +57,7 @@ export const createPost = async (req, res) => {
 
     const post = await Post.create({
       user: req.user._id,
-      image: `/uploads/posts/${req.file.filename}`,
+      image: req.file.path,
       caption: caption || "",
       location: location || "",
       tags: parsedTags,
@@ -96,11 +96,10 @@ export const updatePost = async (req, res) => {
       post.tags = tags.split(",").map((tag) => tag.trim()).filter(Boolean);
     }
 
-    // Optional new image
+  // Optional new image — req.file.path is already the full Cloudinary URL
     if (req.file) {
-      post.image = `/uploads/posts/${req.file.filename}`;
+      post.image = req.file.path;
     }
-
     const updatedPost = await post.save();
     const populatedPost = await updatedPost.populate("user", "name username profileImage");
 

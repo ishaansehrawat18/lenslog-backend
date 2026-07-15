@@ -1,17 +1,11 @@
 import express from "express";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import { notFound, errorHandler } from "./middlewares/errorMiddleware.js";
-
-// Needed to resolve __dirname in ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Initialize the Express application
 const app = express();
@@ -31,9 +25,10 @@ app.use(
   })
 );
 
-// Serve uploaded images statically, e.g.:
-// http://localhost:5000/uploads/posts/image-12345.jpg
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// NOTE: local /uploads static file serving has been removed — images
+// are now uploaded directly to Cloudinary (see middlewares/uploadMiddleware.js)
+// and served from Cloudinary's own URLs, so we no longer need to serve
+// anything from local disk.
 
 // ------------------ Routes ------------------
 // Root endpoint - simple health check to confirm the API is alive

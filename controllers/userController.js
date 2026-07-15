@@ -39,10 +39,12 @@ export const updateProfile = async (req, res) => {
     if (name) user.name = name;
     if (bio !== undefined) user.bio = bio;
 
-    // If a new profile picture was uploaded, Multer attaches it to req.file
+ 
+     // If a new profile picture was uploaded, Multer (via Cloudinary
+    // storage) attaches it to req.file. req.file.path is already the
+    // full, permanent Cloudinary URL — no need to build a local path.
     if (req.file) {
-      // Store a web-accessible relative path (served statically from app.js)
-      user.profileImage = `/uploads/profiles/${req.file.filename}`;
+      user.profileImage = req.file.path;
     }
 
     const updatedUser = await user.save();
@@ -76,5 +78,29 @@ export const getMyPosts = async (req, res) => {
   } catch (error) {
     console.error("Get my posts error:", error.message);
     return res.status(500).json({ message: "Server error fetching your posts" });
+  }
+};
+
+// @desc    Get any user's public profile + their posts by username
+// @route   GET /api/users/:username
+// @access  Public
+export const getUserByUsername = async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username.toLowerCase() }).select(
+      "-password -email"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const posts = await Post.find({ user: user._id })
+      .populate("user", "name username profileImage")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({ user, posts });
+  } catch (error) {
+    console.error("Get user by username error:", error.message);
+    return res.status(500).json({ message: "Server error fetching user" });
   }
 };

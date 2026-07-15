@@ -1,19 +1,17 @@
-import dotenv from "dotenv";
+// "dotenv/config" must be the very first import in this file. In ES
+// Modules, all imports are fully evaluated before any of this file's
+// own code runs — so if dotenv.config() were called after importing
+// app.js, the entire app.js dependency chain (including Cloudinary's
+// config, which reads process.env at import time) would already have
+// run with empty environment variables. Importing "dotenv/config"
+// directly (instead of calling dotenv.config() as a later statement)
+// loads the .env file immediately, before anything else is evaluated.
+import "dotenv/config";
 import app from "./app.js";
 import connectDB from "./config/db.js";
 
-// Load environment variables from .env into process.env
-dotenv.config();
-
-
-
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB Atlas, then start listening for requests.
-// We wait for the DB connection first so the app never accepts
-// traffic while the database is unreachable.
 connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`✅ LensLog server running on http://localhost:${PORT}`);
-  });
+  app.listen(PORT, () => console.log(`✅ LensLog server running on http://localhost:${PORT}`));
 });

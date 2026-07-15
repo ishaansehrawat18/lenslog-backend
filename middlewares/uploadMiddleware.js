@@ -1,55 +1,36 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
-// Ensure upload directories exist (in case the folders were removed/not committed)
-const profileDir = "uploads/profiles";
-const postDir = "uploads/posts";
-[profileDir, postDir].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+// Cloudinary storage for profile pictures — uploaded into a
+// "lenslog/profiles" folder in your Cloudinary account.
+const profileStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "lenslog/profiles",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    // Automatically resize large uploads down to a sane max size
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
+  },
 });
 
-// Only allow image files to be uploaded
-const imageFileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp/;
-  const extValid = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimeValid = allowedTypes.test(file.mimetype);
-  
-  
+// Cloudinary storage for post images — uploaded into "lenslog/posts"
+const postStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "lenslog/posts",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [{ width: 1600, height: 1600, crop: "limit" }],
+  },
+});
 
-  if (extValid || mimeValid) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only image files (jpeg, jpg, png, webp) are allowed"), false);
-  }
-};
-
-// Builds a multer storage engine for a given destination folder.
-// Filenames are prefixed with a timestamp to avoid collisions.
-const buildStorage = (destinationFolder) =>
-  multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, destinationFolder);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      const ext = path.extname(file.originalname);
-      cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-    },
-  });
-
-// Upload instance for profile pictures -> uploads/profiles
+// 5MB limit for profile pictures, 8MB for post images — same limits as before
 export const uploadProfileImage = multer({
-  storage: buildStorage(profileDir),
-  fileFilter: imageFileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  storage: profileStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// Upload instance for post images -> uploads/posts
 export const uploadPostImage = multer({
-  storage: buildStorage(postDir),
-  fileFilter: imageFileFilter,
-  limits: { fileSize: 8 * 1024 * 1024 }, // 8MB max
+  storage: postStorage,
+  limits: { fileSize: 8 * 1024 * 1024 },
 });
