@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 
@@ -11,34 +10,37 @@ export const registerUser = async (req, res) => {
 
     // 1. Validate required fields
     if (!name || !username || !email || !password) {
-      return res.status(400).json({ message: "Please provide name, username, email, and password" });
+      return res.status(400).json({
+        message: "Please provide name, username, email, and password",
+      });
     }
 
-    // 2. Check if a user with this email or username already exists
+    // 2. Check if email or username already exists
     const existingUser = await User.findOne({
-      $or: [{ email: email.toLowerCase() }, { username: username.toLowerCase() }],
+      $or: [
+        { email: email.toLowerCase() },
+        { username: username.toLowerCase() },
+      ],
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: "Email or username already in use" });
+      return res.status(400).json({
+        message: "Email or username already in use",
+      });
     }
 
-    // 3. Hash the password before saving (never store plain text passwords)
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // 4. Create the user
+    // 3. Create user (Password stored as plain text)
     const user = await User.create({
       name,
-      username,
-      email,
-      password: hashedPassword,
+      username: username.toLowerCase(),
+      email: email.toLowerCase(),
+      password,
     });
 
-    // 5. Generate a JWT for immediate login after registration
+    // 4. Generate JWT
     const token = generateToken(user._id);
 
-    // 6. Respond — never send back the password field
+    // 5. Send response
     return res.status(201).json({
       _id: user._id,
       name: user.name,
@@ -50,11 +52,13 @@ export const registerUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Register error:", error.message);
-    return res.status(500).json({ message: "Server error during registration" });
+    return res.status(500).json({
+      message: "Server error during registration",
+    });
   }
 };
 
-// @desc    Login an existing user
+// @desc    Login user
 // @route   POST /api/auth/login
 // @access  Public
 export const loginUser = async (req, res) => {
@@ -63,27 +67,33 @@ export const loginUser = async (req, res) => {
 
     // 1. Validate required fields
     if (!email || !password) {
-      return res.status(400).json({ message: "Please provide email and password" });
+      return res.status(400).json({
+        message: "Please provide email and password",
+      });
     }
 
-    // 2. Find the user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // 2. Find user
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+    });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
     }
 
-    // 3. Compare provided password with the hashed password in DB
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+    // 3. Compare plain text passwords
+    if (user.password !== password) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
     }
 
-    // 4. Generate a JWT
+    // 4. Generate JWT
     const token = generateToken(user._id);
 
-    // 5. Respond — never send back the password field
+    // 5. Send response
     return res.status(200).json({
       _id: user._id,
       name: user.name,
@@ -95,19 +105,22 @@ export const loginUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error.message);
-    return res.status(500).json({ message: "Server error during login" });
+    return res.status(500).json({
+      message: "Server error during login",
+    });
   }
 };
 
-// @desc    Get currently logged-in user's profile
+// @desc    Get current logged-in user
 // @route   GET /api/auth/me
-// @access  Private (requires valid JWT)
+// @access  Private
 export const getMe = async (req, res) => {
   try {
-    // req.user was attached by the authMiddleware after verifying the token
     return res.status(200).json(req.user);
   } catch (error) {
     console.error("Get current user error:", error.message);
-    return res.status(500).json({ message: "Server error fetching current user" });
+    return res.status(500).json({
+      message: "Server error fetching current user",
+    });
   }
 };
