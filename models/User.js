@@ -32,9 +32,40 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    profileImage: {
+ profileImage: {
       type: String,
       default: "",
+    },
+    // Users who follow THIS user
+    followers: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
+   // Users that THIS user follows
+    following: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
+    // Posts this user has bookmarked/saved
+    bookmarks: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Post",
+      default: [],
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpire: {
+      type: Date,
+      default: null,
     },
   },
   {

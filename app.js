@@ -5,6 +5,9 @@ import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 import { notFound, errorHandler } from "./middlewares/errorMiddleware.js";
 
 // Initialize the Express application
@@ -51,6 +54,15 @@ app.use("/api", commentRoutes);
 
 // Search route: /api/search?query=...
 app.use("/api/search", searchRoutes);
+
+// Admin routes: /api/admin/stats, /users, /posts (all require admin role)
+app.use("/api/admin", adminRoutes);
+
+// Notification routes: /api/notifications
+app.use("/api/notifications", notificationRoutes);
+
+// Message routes: /api/messages/conversations, /api/messages/:userId
+app.use("/api/messages", messageRoutes);
 
 // ------------------ Error Handling ------------------
 // IMPORTANT: these must be registered LAST, after all other routes.

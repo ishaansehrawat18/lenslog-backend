@@ -104,3 +104,22 @@ export const getUserByUsername = async (req, res) => {
     return res.status(500).json({ message: "Server error fetching user" });
   }
 };
+// @desc    Suggest users to follow (excludes self and already-followed users)
+// @route   GET /api/users/suggestions
+// @access  Private
+export const getSuggestedUsers = async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user._id).select("following");
+    const excludeIds = [req.user._id, ...currentUser.following];
+
+    const suggestions = await User.find({ _id: { $nin: excludeIds } })
+      .select("name username profileImage")
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    return res.status(200).json(suggestions);
+  } catch (error) {
+    console.error("Get suggestions error:", error.message);
+    return res.status(500).json({ message: "Server error fetching suggestions" });
+  }
+};

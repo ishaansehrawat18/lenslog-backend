@@ -72,10 +72,11 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // 2. Find user
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-    });
+   // Allow logging in with either email or username — treat whatever
+// was typed as either field and match on the first hit
+const user = await User.findOne({
+  $or: [{ email: email.toLowerCase() }, { username: email.toLowerCase() }],
+});
 
     if (!user) {
       return res.status(401).json({

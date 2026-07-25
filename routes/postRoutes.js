@@ -9,6 +9,7 @@ import {
 } from "../controllers/postController.js";
 import protect from "../middlewares/authMiddleware.js";
 import { uploadPostImage } from "../middlewares/uploadMiddleware.js";
+import { addBookmark, removeBookmark } from "../controllers/bookmarkController.js";
 
 const router = express.Router();
 
@@ -21,5 +22,7 @@ router.post("/", protect, uploadPostImage.single("image"), createPost);
 router.put("/:id", protect, uploadPostImage.single("image"), updatePost);
 router.delete("/:id", protect, deletePost);
 router.post("/:id/like", protect, toggleLike);
+router.post("/:id/bookmark", protect, addBookmark);
+router.delete("/:id/bookmark", protect, removeBookmark);
 
 export default router;

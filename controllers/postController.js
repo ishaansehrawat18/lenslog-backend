@@ -1,4 +1,5 @@
 import Post from "../models/Post.js";
+import Notification from "../models/Notification.js";
 
 // @desc    Get all posts (feed), newest first
 // @route   GET /api/posts
@@ -150,11 +151,21 @@ export const toggleLike = async (req, res) => {
     // Check whether this user has already liked the post
     const alreadyLikedIndex = post.likes.findIndex((id) => id.toString() === userId);
 
-    let liked;
+ let liked;
     if (alreadyLikedIndex === -1) {
       // Not liked yet -> add the like
       post.likes.push(req.user._id);
       liked = true;
+
+      // Notify the post owner (skip if liking your own post)
+      if (post.user.toString() !== req.user._id.toString()) {
+        await Notification.create({
+          recipient: post.user,
+          sender: req.user._id,
+          post: post._id,
+          type: "like",
+        });
+      }
     } else {
       // Already liked -> remove it (unlike)
       post.likes.splice(alreadyLikedIndex, 1);

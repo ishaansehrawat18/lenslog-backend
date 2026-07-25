@@ -1,5 +1,6 @@
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
+import Notification from "../models/Notification.js";
 
 // @desc    Add a comment to a post
 // @route   POST /api/posts/:id/comments
@@ -24,6 +25,15 @@ export const addComment = async (req, res) => {
       user: req.user._id,
       text: text.trim(),
     });
+// Notify the post owner (skip if commenting on your own post)
+    if (post.user.toString() !== req.user._id.toString()) {
+      await Notification.create({
+        recipient: post.user,
+        sender: req.user._id,
+        post: post._id,
+        type: "comment",
+      });
+    }
 
     const populatedComment = await comment.populate("user", "name username profileImage");
 
