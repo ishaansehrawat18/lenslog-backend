@@ -1,16 +1,28 @@
 import Post from "../models/Post.js";
 import Notification from "../models/Notification.js";
 
-// @desc    Get all posts (feed), newest first
-// @route   GET /api/posts
+// @desc    Get all posts (feed), newest first, paginated
+// @route   GET /api/posts?page=1&limit=9
 // @access  Public
 export const getPosts = async (req, res) => {
   try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 9, 1);
+    const skip = (page - 1) * limit;
+
+    // Fetch one extra post beyond the requested limit — if we get it
+    // back, that tells us there's a next page, without needing a
+    // separate (slower) countDocuments() query just to know that.
     const posts = await Post.find({})
       .populate("user", "name username profileImage")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit + 1);
 
-    return res.status(200).json(posts);
+    const hasMore = posts.length > limit;
+    const pagePosts = hasMore ? posts.slice(0, limit) : posts;
+
+    return res.status(200).json({ posts: pagePosts, hasMore, page });
   } catch (error) {
     console.error("Get posts error:", error.message);
     return res.status(500).json({ message: "Server error fetching posts" });
@@ -97,10 +109,11 @@ export const updatePost = async (req, res) => {
       post.tags = tags.split(",").map((tag) => tag.trim()).filter(Boolean);
     }
 
-  // Optional new image — req.file.path is already the full Cloudinary URL
+    // Optional new image — req.file.path is already the full Cloudinary URL
     if (req.file) {
       post.image = req.file.path;
     }
+
     const updatedPost = await post.save();
     const populatedPost = await updatedPost.populate("user", "name username profileImage");
 
@@ -151,7 +164,7 @@ export const toggleLike = async (req, res) => {
     // Check whether this user has already liked the post
     const alreadyLikedIndex = post.likes.findIndex((id) => id.toString() === userId);
 
- let liked;
+    let liked;
     if (alreadyLikedIndex === -1) {
       // Not liked yet -> add the like
       post.likes.push(req.user._id);
