@@ -34,3 +34,13 @@ export const uploadPostImage = multer({
   storage: postStorage,
   limits: { fileSize: 8 * 1024 * 1024 },
 });
+
+// Memory storage — used only for the AI caption-suggestion endpoint,
+// where we need the raw file bytes temporarily (to send to Gemini as
+// base64) but don't want to actually save the file anywhere. Nothing
+// touches disk or Cloudinary here; req.file.buffer holds the bytes
+// in memory for the life of that single request only.
+export const uploadToMemory = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 },
+});

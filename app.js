@@ -8,6 +8,7 @@ import searchRoutes from "./routes/searchRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 import { notFound, errorHandler } from "./middlewares/errorMiddleware.js";
 
 // Initialize the Express application
@@ -63,6 +64,9 @@ app.use("/api/notifications", notificationRoutes);
 
 // Message routes: /api/messages/conversations, /api/messages/:userId
 app.use("/api/messages", messageRoutes);
+
+// AI routes: /api/ai/suggest-caption, /api/ai/chat
+app.use("/api/ai", aiRoutes);
 
 // ------------------ Error Handling ------------------
 // IMPORTANT: these must be registered LAST, after all other routes.
