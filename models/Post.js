@@ -9,7 +9,14 @@ const postSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      required: [true, "Post image is required"],
+      required: [true, "Post media is required"],
+    },
+    // Distinguishes whether `image` actually holds a photo or a video
+    // URL, so the frontend knows whether to render <img> or <video>.
+    mediaType: {
+      type: String,
+      enum: ["image", "video"],
+      default: "image",
     },
     caption: {
       type: String,
@@ -42,5 +49,4 @@ const postSchema = new mongoose.Schema(
 );
 
 const Post = mongoose.model("Post", postSchema);
-
 export default Post;

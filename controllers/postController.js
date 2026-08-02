@@ -1,6 +1,10 @@
 import Post from "../models/Post.js";
 import Notification from "../models/Notification.js";
 
+// A file's mimetype (e.g. "video/mp4", "image/jpeg") tells us which
+// kind of media was actually uploaded.
+const getMediaType = (mimetype) => (mimetype?.startsWith("video") ? "video" : "image");
+
 // @desc    Get all posts (feed), newest first, paginated
 // @route   GET /api/posts?page=1&limit=9
 // @access  Public
@@ -58,9 +62,9 @@ export const createPost = async (req, res) => {
   try {
     const { caption, location, tags } = req.body;
 
-    // The image is required — Multer attaches the uploaded file to req.file
+    // The media is required — Multer attaches the uploaded file to req.file
     if (!req.file) {
-      return res.status(400).json({ message: "Post image is required" });
+      return res.status(400).json({ message: "Post image or video is required" });
     }
 
     // tags may arrive as a comma-separated string (e.g. "sunset,portrait")
@@ -71,6 +75,7 @@ export const createPost = async (req, res) => {
     const post = await Post.create({
       user: req.user._id,
       image: req.file.path,
+      mediaType: getMediaType(req.file.mimetype),
       caption: caption || "",
       location: location || "",
       tags: parsedTags,
@@ -85,7 +90,7 @@ export const createPost = async (req, res) => {
   }
 };
 
-// @desc    Update a post (caption, location, tags, optionally image)
+// @desc    Update a post (caption, location, tags, optionally media)
 // @route   PUT /api/posts/:id
 // @access  Private (owner only)
 export const updatePost = async (req, res) => {
@@ -109,9 +114,10 @@ export const updatePost = async (req, res) => {
       post.tags = tags.split(",").map((tag) => tag.trim()).filter(Boolean);
     }
 
-    // Optional new image — req.file.path is already the full Cloudinary URL
+    // Optional new media — req.file.path is already the full Cloudinary URL
     if (req.file) {
       post.image = req.file.path;
+      post.mediaType = getMediaType(req.file.mimetype);
     }
 
     const updatedPost = await post.save();
